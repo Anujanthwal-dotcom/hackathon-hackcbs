@@ -4,7 +4,7 @@ import logging
 
 import uvicorn
 
-from app.config import PORT
+from app.config import HOST, PORT
 from app.server import create_app
 
 
@@ -16,7 +16,7 @@ def main() -> None:
     app, _hub = create_app()
     uvicorn.run(
         app,
-        host="127.0.0.1",
+        host=HOST,
         port=PORT,
         log_level="warning",
         access_log=False,

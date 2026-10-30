@@ -118,14 +118,10 @@ if ! launch nurse "$LOG_DIR/nurse.log" \
   bun --cwd="$ROOT/4_nurse_dashboard" run dev; then fail; fi
 wait_for_http nurse "http://127.0.0.1:3000" 160 || fail
 
-if ! launch doctor "$LOG_DIR/doctor.log" \
-  bun --cwd="$ROOT/5_doctor_portal" run dev; then fail; fi
-wait_for_http doctor "http://127.0.0.1:3001" 160 || fail
-
 echo
 echo "Cura Health is live"
 echo "  Nursing station   http://localhost:3000"
-echo "  Doctor dispatch   http://localhost:3001"
+echo "  Doctor mobile     Expo app (run ./scripts/start_doctor_mobile.sh)"
 echo "  Central hub       http://localhost:8000/docs"
 echo "  Edge agent        http://localhost:8001/docs"
 echo "  Generator         http://localhost:8002/docs"

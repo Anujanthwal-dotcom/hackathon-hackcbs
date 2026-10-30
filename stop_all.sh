@@ -84,7 +84,7 @@ else
 fi
 
 remaining=0
-for port in 8000 8001 8002 3000 3001; do
+for port in 8000 8001 8002 3000; do
   pids="$(lsof -tiTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)"
   if [[ -n "$pids" ]]; then
     remaining=1
