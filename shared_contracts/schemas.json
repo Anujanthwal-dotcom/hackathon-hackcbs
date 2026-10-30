@@ -1,0 +1,199 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://curahealth.local/schemas.json",
+  "title": "Cura Health shared contracts",
+  "$defs": {
+    "news2_component": {
+      "type": "object",
+      "required": ["parameter", "label", "value", "score"],
+      "properties": {
+        "parameter": {
+          "enum": ["respiratory_rate", "spo2", "systolic_bp", "heart_rate", "temp_c"]
+        },
+        "label": { "type": "string" },
+        "value": { "type": "number" },
+        "score": { "type": "integer", "minimum": 0, "maximum": 3 }
+      },
+      "additionalProperties": false
+    },
+    "telemetry_packet": {
+      "type": "object",
+      "required": [
+        "bed_id",
+        "patient_name",
+        "timestamp",
+        "heart_rate",
+        "systolic_bp",
+        "diastolic_bp",
+        "respiratory_rate",
+        "spo2",
+        "temp_c"
+      ],
+      "properties": {
+        "bed_id": { "type": "string", "pattern": "^(Bed|Room)-[0-9]{3}$" },
+        "patient_name": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "heart_rate": { "type": "number", "minimum": 0, "maximum": 300 },
+        "systolic_bp": { "type": "number", "minimum": 0, "maximum": 300 },
+        "diastolic_bp": { "type": "number", "minimum": 0, "maximum": 200 },
+        "respiratory_rate": { "type": "number", "minimum": 0, "maximum": 80 },
+        "spo2": { "type": "number", "minimum": 0, "maximum": 100 },
+        "temp_c": { "type": "number", "minimum": 20, "maximum": 45 }
+      },
+      "additionalProperties": false
+    },
+    "enriched_telemetry": {
+      "allOf": [{ "$ref": "#/$defs/telemetry_packet" }],
+      "type": "object",
+      "required": [
+        "map",
+        "news2_score",
+        "news2_components",
+        "filter_status",
+        "sensor_status",
+        "patient_context",
+        "received_at"
+      ],
+      "properties": {
+        "map": { "type": "number" },
+        "news2_score": { "type": "integer", "minimum": 0, "maximum": 20 },
+        "news2_components": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/news2_component" }
+        },
+        "filter_status": { "enum": ["PASS", "ARTIFACT_SUPPRESSED"] },
+        "sensor_status": { "enum": ["OK", "PROBE_DISCONNECTED"] },
+        "patient_context": { "type": "string" },
+        "received_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "sbar": {
+      "type": "object",
+      "required": ["situation", "background", "assessment", "recommendation"],
+      "properties": {
+        "situation": { "type": "string" },
+        "background": { "type": "string" },
+        "assessment": { "type": "string" },
+        "recommendation": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "alert_packet": {
+      "type": "object",
+      "required": [
+        "alert_id",
+        "bed_id",
+        "patient_name",
+        "severity",
+        "news2_score",
+        "sbar",
+        "timestamp",
+        "patient_context",
+        "news2_components",
+        "sbar_source",
+        "status"
+      ],
+      "properties": {
+        "alert_id": { "type": "string", "pattern": "^alt_" },
+        "bed_id": { "type": "string" },
+        "patient_name": { "type": "string" },
+        "severity": { "enum": ["CRITICAL", "HIGH", "MEDIUM"] },
+        "news2_score": { "type": "integer", "minimum": 0, "maximum": 20 },
+        "sbar": { "$ref": "#/$defs/sbar" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "patient_context": { "type": "string" },
+        "news2_components": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/news2_component" }
+        },
+        "sbar_source": { "enum": ["GEMINI", "OPENAI", "LOCAL_FALLBACK"] },
+        "status": {
+          "enum": ["PENDING_VERIFICATION", "VERIFIED", "DISMISSED", "CLAIMED"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "claim_record": {
+      "type": "object",
+      "required": ["alert_id", "doctor_id", "doctor_name", "claimed_at"],
+      "properties": {
+        "alert_id": { "type": "string" },
+        "doctor_id": { "type": "string" },
+        "doctor_name": { "type": "string" },
+        "claimed_at": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "demo_state": {
+      "type": "object",
+      "required": ["active", "started_at", "target_bed_id", "eta_seconds"],
+      "properties": {
+        "active": { "type": "boolean" },
+        "started_at": { "type": ["string", "null"], "format": "date-time" },
+        "target_bed_id": { "type": ["string", "null"] },
+        "eta_seconds": { "type": ["integer", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "state_snapshot": {
+      "type": "object",
+      "required": ["beds", "alerts", "claims", "demo", "server_time"],
+      "properties": {
+        "beds": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/enriched_telemetry" }
+        },
+        "alerts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/alert_packet" }
+        },
+        "claims": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/claim_record" }
+        },
+        "demo": { "$ref": "#/$defs/demo_state" },
+        "server_time": { "type": "string", "format": "date-time" }
+      }
+    },
+    "nurse_action": {
+      "type": "object",
+      "required": ["alert_id", "action", "nurse_id"],
+      "properties": {
+        "alert_id": { "type": "string" },
+        "action": { "enum": ["VERIFIED", "DISMISSED"] },
+        "nurse_id": { "type": "string" },
+        "note": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "doctor_claim": {
+      "type": "object",
+      "required": ["alert_id", "doctor_id", "doctor_name"],
+      "properties": {
+        "alert_id": { "type": "string" },
+        "doctor_id": { "type": "string" },
+        "doctor_name": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "server_event": {
+      "type": "object",
+      "required": ["type", "data"],
+      "properties": {
+        "type": {
+          "enum": [
+            "STATE_SNAPSHOT",
+            "TELEMETRY_STREAM",
+            "ALERT_NEW",
+            "ALERT_VERIFIED",
+            "ALERT_DISMISSED",
+            "CASE_CLAIMED",
+            "SYSTEM_RESET",
+            "DEMO_STARTED"
+          ]
+        },
+        "data": { "type": "object" }
+      }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "cura-health",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "shared_contracts",
+    "4_nurse_dashboard",
+    "5_doctor_portal"
+  ],
+  "scripts": {
+    "build": "bun run --filter '*' build",
+    "typecheck": "bun run --filter '*' typecheck"
+  }
+}

@@ -1,0 +1,1 @@
+"""Central hospital hub package."""

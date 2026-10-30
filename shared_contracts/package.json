@@ -1,0 +1,10 @@
+{
+  "name": "@cura-health/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "types": "./types.ts",
+  "exports": {
+    ".": "./types.ts"
+  }
+}
